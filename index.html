@@ -78,8 +78,129 @@ button[hidden]{display:none}
 @keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
+
+<!-- ============================================================
+     WELCOME SCREEN (added) — every selector, id and keyframe below
+     is prefixed "wl" so it cannot collide with the original styles.
+     ============================================================ -->
+<style>
+/* scroll lock while the welcome screen exists (:has) + JS fallback class */
+html:has(#wlScreen),html.wl-lock{overflow:hidden}
+html:has(#wlScreen) body,body.wl-lock{overflow:hidden}
+
+.wl{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,3vh,26px);
+padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(18px + env(safe-area-inset-bottom,0px));text-align:center;overflow:hidden;color:#8a1f4d;
+background:radial-gradient(circle at 50% 16%,#fff8fc 0%,#ffe3f0 36%,#ffc6dd 70%,#ffadce 100%);
+touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+opacity:1;transition:opacity .9s ease,transform .9s ease}
+.wl.wl-out{opacity:0;transform:scale(1.04);pointer-events:none}
+
+/* soft drifting glow blobs */
+.wl-blob{position:absolute;border-radius:50%;filter:blur(46px);opacity:.55;pointer-events:none;animation:wl-drift 14s ease-in-out infinite alternate}
+.wl-blob.a{width:70vmax;height:70vmax;left:-28vmax;top:-26vmax;background:#ff9fc8}
+.wl-blob.b{width:60vmax;height:60vmax;right:-24vmax;top:18vh;background:#dcc8ff;animation-duration:18s;animation-delay:-4s}
+.wl-blob.c{width:56vmax;height:56vmax;left:-14vmax;bottom:-28vmax;background:#ffd2c4;animation-duration:16s;animation-delay:-8s}
+@keyframes wl-drift{to{transform:translate(7vmax,5vmax) scale(1.15)}}
+
+/* floating hearts + sparkles layer */
+.wl-fx{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.wl-fh{position:absolute;bottom:-44px;line-height:1;filter:drop-shadow(0 2px 6px rgba(255,77,148,.45));animation:wl-rise linear forwards}
+.wl-fh.wl-static{bottom:auto}
+@keyframes wl-rise{0%{transform:translate(0,0) rotate(-10deg);opacity:0}10%{opacity:.95}88%{opacity:.8}100%{transform:translate(var(--dx,0px),-118vh) rotate(14deg);opacity:0}}
+.wl-sp{position:absolute;line-height:1;color:#fff;text-shadow:0 0 6px #fff,0 0 14px #ff7fb5;animation:wl-tw 2.2s ease-in-out forwards}
+.wl-sp.wl-static{opacity:.85}
+@keyframes wl-tw{0%{transform:scale(0) rotate(0);opacity:0}50%{transform:scale(1) rotate(90deg);opacity:1}100%{transform:scale(0) rotate(180deg);opacity:0}}
+
+/* headline + hint */
+.wl .wl-title{position:relative;z-index:2;margin:0;max-width:min(92vw,560px);font-family:Pacifico,Fredoka,"Trebuchet MS",cursive;font-weight:400;
+font-size:clamp(1.55rem,6.4vw,2.5rem);line-height:1.32;color:#c01c63;transform:none;
+text-shadow:0 2px 0 #fff,0 0 22px rgba(255,255,255,.95),0 6px 22px rgba(214,41,117,.3);animation:wl-in .9s ease both}
+@keyframes wl-in{from{opacity:0;transform:translateY(14px)}}
+.wl .wl-hint{position:relative;z-index:2;margin:0;font-family:Fredoka,"Trebuchet MS",sans-serif;font-weight:600;font-size:clamp(1.05rem,4.2vw,1.35rem);
+color:#a3225a;text-shadow:0 1px 0 rgba(255,255,255,.9);animation:wl-nudge 1.8s ease-in-out infinite}
+@keyframes wl-nudge{50%{transform:scale(1.06);opacity:.8}}
+
+/* gift stage */
+.wl-stage{position:relative;z-index:2;width:220px;height:230px;flex:none}
+.wl-scale{position:absolute;left:50%;top:50%;width:220px;height:230px;margin:-115px 0 0 -110px;display:flex;align-items:center;justify-content:center}
+.wl-halo{position:absolute;width:270px;height:270px;border-radius:50%;pointer-events:none;
+background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(255,160,200,.5) 45%,transparent 70%);animation:wl-halo 2.4s ease-in-out infinite}
+@keyframes wl-halo{50%{transform:scale(1.16);opacity:.75}}
+.wl-shadow{position:absolute;left:50%;bottom:6px;width:150px;height:18px;margin-left:-75px;border-radius:50%;background:rgba(150,30,80,.3);filter:blur(6px);animation:wl-sh 1.8s ease-in-out infinite}
+@keyframes wl-sh{0%,100%{transform:scale(1);opacity:1}40%{transform:scale(.7);opacity:.6}}
+
+.wl .wl-gift{all:unset;box-sizing:border-box;display:block;position:relative;width:180px;height:200px;cursor:pointer;
+-webkit-tap-highlight-color:transparent;touch-action:manipulation;transform-origin:50% 100%;animation:wl-bounce 1.8s ease-in-out infinite}
+.wl .wl-gift:focus-visible{outline:3px solid #c01c63;outline-offset:10px;border-radius:18px}
+@keyframes wl-bounce{
+0%,100%{transform:translateY(0) scale(1,1)}
+15%{transform:translateY(0) scale(1.06,.93)}
+40%{transform:translateY(-24px) scale(.97,1.04)}
+62%{transform:translateY(0) scale(1.04,.96)}
+74%{transform:translateY(-7px) scale(1,1)}
+86%{transform:translateY(0) scale(1,1)}}
+
+.wl-box{position:absolute;left:10px;bottom:0;width:160px;height:112px;border-radius:6px 6px 14px 14px;overflow:hidden;
+background:radial-gradient(circle,rgba(255,255,255,.34) 3px,transparent 4px) 0 0/22px 22px,linear-gradient(160deg,#ff9cc4 0%,#ff5f9f 55%,#e23a85 100%);
+box-shadow:inset 8px 0 14px rgba(255,255,255,.35),inset -14px -10px 18px rgba(150,20,80,.35),0 10px 20px rgba(190,40,110,.35)}
+.wl-rv{position:absolute;left:50%;top:0;bottom:0;width:34px;margin-left:-17px;background:linear-gradient(90deg,#fff1f7,#ffd3e5 50%,#ffb9d6);box-shadow:inset 0 0 6px rgba(190,40,110,.25)}
+.wl-beam{position:absolute;left:30px;bottom:106px;width:120px;height:0;opacity:0;border-radius:60px 60px 0 0;filter:blur(2px);
+background:linear-gradient(to top,rgba(255,255,255,.95),rgba(255,214,232,0));transition:height .6s ease .15s,opacity .6s ease .15s}
+.wl-lid{position:absolute;left:2px;bottom:104px;width:176px;height:46px;border-radius:12px;transform-origin:12% 100%;
+background:linear-gradient(160deg,#ffb0d0,#ff5f9f 60%,#e8438a);
+box-shadow:inset 6px 0 10px rgba(255,255,255,.4),inset -10px -6px 14px rgba(150,20,80,.3),0 6px 12px rgba(190,40,110,.3);
+transition:transform .75s cubic-bezier(.3,1.5,.5,1),opacity .6s ease .3s}
+.wl-lv{position:absolute;left:50%;top:0;bottom:0;width:38px;margin-left:-19px;background:linear-gradient(90deg,#fff1f7,#ffd3e5 50%,#ffb9d6);box-shadow:inset 0 0 6px rgba(190,40,110,.25)}
+.wl-bow{position:absolute;left:50%;bottom:100%;width:0;height:0}
+.wl-bow i{position:absolute;bottom:-8px;width:54px;height:40px;border-radius:50%/60% 60% 40% 40%;
+background:radial-gradient(circle at 35% 30%,#fff7fb,#ffc2dc 60%,#ff9cc4);box-shadow:inset 0 -4px 8px rgba(190,40,110,.3),0 3px 6px rgba(190,40,110,.25)}
+.wl-bow .l{left:-56px;transform:rotate(-24deg)}
+.wl-bow .r{left:2px;transform:rotate(24deg)}
+.wl-bow .k{left:-13px;width:26px;height:26px;border-radius:50%;z-index:2}
+
+/* open state */
+.wl.wl-open .wl-gift{pointer-events:none;animation:wl-pop .6s ease forwards}
+@keyframes wl-pop{0%{transform:scale(1)}35%{transform:scale(1.1,.9)}100%{transform:scale(1)}}
+.wl.wl-open .wl-lid{transform:translate(-34px,-64px) rotate(-26deg);opacity:0}
+.wl.wl-open .wl-beam{height:92px;opacity:1}
+.wl.wl-open .wl-halo{animation:wl-flash 1s ease-out forwards}
+@keyframes wl-flash{to{transform:scale(2.6);opacity:0}}
+.wl.wl-open .wl-shadow{animation:none}
+.wl.wl-open .wl-hint{animation:none;opacity:.0;transition:opacity .4s ease}
+
+/* heart + sparkle burst */
+.wl-burst{position:absolute;z-index:6;left:var(--sx);top:var(--sy);line-height:1;pointer-events:none;
+filter:drop-shadow(0 2px 6px rgba(255,77,148,.5));animation:wl-fly 1.5s cubic-bezier(.15,.7,.3,1) forwards}
+@keyframes wl-fly{0%{transform:translate(-50%,-50%) scale(.3);opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1.1);opacity:0}}
+
+/* short / landscape screens */
+@media (max-height:620px){.wl-stage{width:154px;height:161px}.wl-scale{transform:scale(.7)}}
+@media (max-height:480px){.wl .wl-title{font-size:1.25rem}.wl-stage{width:121px;height:127px}.wl-scale{transform:scale(.55)}}
+</style>
 </head>
 <body>
+
+<!-- ===== WELCOME SCREEN (added) ===== -->
+<div class="wl" id="wlScreen" role="dialog" aria-modal="true" aria-label="Welcome">
+<div class="wl-blob a" aria-hidden="true"></div>
+<div class="wl-blob b" aria-hidden="true"></div>
+<div class="wl-blob c" aria-hidden="true"></div>
+<div class="wl-fx" id="wlFx" aria-hidden="true"></div>
+<h1 class="wl-title">Hey Kritika, someone made something special for you! 💗</h1>
+<div class="wl-stage" id="wlStage">
+<div class="wl-scale">
+<div class="wl-halo" aria-hidden="true"></div>
+<div class="wl-shadow" aria-hidden="true"></div>
+<button type="button" class="wl-gift" id="wlGift" aria-label="Tap to open your surprise">
+<span class="wl-box"><span class="wl-rv"></span></span>
+<span class="wl-beam"></span>
+<span class="wl-lid"><span class="wl-lv"></span><span class="wl-bow"><i class="l"></i><i class="r"></i><i class="k"></i></span></span>
+</button>
+</div>
+</div>
+<p class="wl-hint">Tap to open your surprise! 🎀</p>
+</div>
+
 <canvas id="fw" aria-hidden="true"></canvas>
 <div class="bl" aria-hidden="true" style="background:#ff5d9e;left:4%;top:15%"></div>
 <div class="bl" aria-hidden="true" style="background:#a88aff;right:5%;top:22%;animation-delay:1s"></div>
@@ -292,6 +413,120 @@ $("#replay").onclick=function(){clearInterval(typing);seen={};envOpen=false;flam
  $("#flame").style.display="block";$("#blowBtn").hidden=false;$("#wishT").textContent="Flame pe double tap karke phoonk maaro";
  $("#face").textContent="🐥";$("#introT").textContent="Kiyoshi, maine tumhare liye kuch banaya hai!";$("#introP").textContent="Dekhna chahoge?";$("#no").textContent="No";$("#no").onclick=nope;
  show("intro")};
+})();
+</script>
+
+<!-- ============================================================
+     WELCOME SCREEN SCRIPT (added) — self-contained IIFE, so none of
+     its variables can clash with the original script above.
+     ============================================================ -->
+<script>
+(function(){
+"use strict";
+var wl=document.getElementById("wlScreen");
+if(!wl)return;
+var gift=document.getElementById("wlGift"),fx=document.getElementById("wlFx"),stage=document.getElementById("wlStage");
+var reduce=false;try{reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
+var opened=false,timers=[],heartT=null,sparkT=null;
+var HEARTS=["💗","💖","💕","💓"],BITS=["💗","✨","💖","🎀","✦","💕"];
+var lockEls=[document.getElementById("app"),document.getElementById("mb")];
+
+function rnd(n){return Math.floor(Math.random()*n)}
+function later(fn,ms){timers.push(setTimeout(fn,ms))}
+
+/* scroll lock + keep the site underneath out of reach of keyboard / screen readers */
+function lock(){
+ document.documentElement.classList.add("wl-lock");document.body.classList.add("wl-lock");
+ lockEls.forEach(function(e){if(!e)return;try{e.inert=true}catch(x){}e.setAttribute("aria-hidden","true")})}
+function unlock(){
+ document.documentElement.classList.remove("wl-lock");document.body.classList.remove("wl-lock");
+ lockEls.forEach(function(e){if(!e)return;try{e.inert=false}catch(x){}e.removeAttribute("aria-hidden")})}
+lock();
+wl.addEventListener("touchmove",function(e){e.preventDefault()},{passive:false});
+
+/* floating hearts + sparkles */
+function heart(seed){
+ if(fx.childElementCount>70)return;
+ var s=document.createElement("span"),dur=6+Math.random()*5;
+ s.className="wl-fh";s.textContent=HEARTS[rnd(HEARTS.length)];
+ s.style.fontSize=(14+Math.random()*24)+"px";s.style.left=(Math.random()*96)+"%";
+ s.style.animationDuration=dur+"s";s.style.setProperty("--dx",(Math.random()*80-40)+"px");
+ if(seed)s.style.animationDelay=-(Math.random()*dur)+"s";
+ fx.appendChild(s);setTimeout(function(){s.remove()},dur*1000+300)}
+function sparkle(){
+ if(fx.childElementCount>70)return;
+ var s=document.createElement("span");
+ s.className="wl-sp";s.textContent=Math.random()<.25?"✨":"✦";
+ s.style.fontSize=(9+Math.random()*13)+"px";s.style.left=(Math.random()*96)+"%";s.style.top=(Math.random()*92)+"%";
+ fx.appendChild(s);setTimeout(function(){s.remove()},2400)}
+if(reduce){
+ /* reduced motion: a calm, static scatter instead of animation */
+ for(var i=0;i<10;i++){var h=document.createElement("span");h.className="wl-fh wl-static";h.textContent=HEARTS[rnd(HEARTS.length)];
+  h.style.fontSize=(14+Math.random()*20)+"px";h.style.left=(Math.random()*92)+"%";h.style.top=(Math.random()*88)+"%";h.style.opacity=".7";fx.appendChild(h)}
+ for(var j=0;j<10;j++){var p=document.createElement("span");p.className="wl-sp wl-static";p.textContent="✦";
+  p.style.fontSize=(9+Math.random()*12)+"px";p.style.left=(Math.random()*94)+"%";p.style.top=(Math.random()*92)+"%";fx.appendChild(p)}
+}else{
+ for(var k=0;k<12;k++)heart(true);
+ heartT=setInterval(heart,550);sparkT=setInterval(sparkle,300)}
+
+/* cute birthday chime (Web Audio, no files) — only runs after the tap */
+function chime(){
+ var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+ var ac;try{ac=new AC()}catch(e){return}
+ try{if(ac.state==="suspended")ac.resume()}catch(e){}
+ var t0=ac.currentTime+.03,master=ac.createGain();
+ master.gain.value=.55;master.connect(ac.destination);
+ function tone(f,st,d,type,v){
+  var o=ac.createOscillator(),g=ac.createGain();
+  o.type=type||"sine";o.frequency.setValueAtTime(f,st);o.connect(g);g.connect(master);
+  g.gain.setValueAtTime(.0001,st);g.gain.exponentialRampToValueAtTime(v||.22,st+.015);g.gain.exponentialRampToValueAtTime(.0001,st+d);
+  o.start(st);o.stop(st+d+.03)}
+ /* little pop as the lid lifts */
+ var po=ac.createOscillator(),pg=ac.createGain();
+ po.type="sine";po.frequency.setValueAtTime(620,t0);po.frequency.exponentialRampToValueAtTime(150,t0+.12);
+ po.connect(pg);pg.connect(master);
+ pg.gain.setValueAtTime(.0001,t0);pg.gain.exponentialRampToValueAtTime(.35,t0+.01);pg.gain.exponentialRampToValueAtTime(.0001,t0+.14);
+ po.start(t0);po.stop(t0+.16);
+ /* music-box "Happy birthday to you" opening: G G A G C B */
+ var m=[[784,0,.14],[784,.15,.14],[880,.3,.28],[784,.6,.28],[1047,.9,.28],[988,1.2,.55]];
+ m.forEach(function(n){var st=t0+.18+n[1];tone(n[0],st,n[2]+.25,"sine",.24);tone(n[0]*2,st,n[2]+.12,"triangle",.07)});
+ /* sparkle on top */
+ [2093,2637,3136,4186].forEach(function(f,i){tone(f,t0+1.55+i*.08,.35,"sine",.1)});
+ setTimeout(function(){try{ac.close()}catch(e){}},3800)}
+
+/* burst of hearts and sparkles from the gift */
+function burst(n){
+ if(reduce)return;
+ var r=stage.getBoundingClientRect(),w=wl.getBoundingClientRect();
+ var cx=r.left+r.width/2-w.left,cy=r.top+r.height*.42-w.top;
+ for(var i=0;i<n;i++){
+  var s=document.createElement("span"),a=Math.random()*Math.PI*2,d=90+Math.random()*170;
+  s.className="wl-burst";s.textContent=BITS[i%BITS.length];
+  s.style.fontSize=(16+Math.random()*18)+"px";
+  s.style.setProperty("--sx",cx+"px");s.style.setProperty("--sy",cy+"px");
+  s.style.setProperty("--x",(Math.cos(a)*d)+"px");s.style.setProperty("--y",(Math.sin(a)*d-60)+"px");
+  s.style.setProperty("--r",(Math.random()*540-270)+"deg");
+  wl.appendChild(s);setTimeout(function(x){x.remove()},1600,s)}}
+
+function finish(){
+ clearInterval(heartT);clearInterval(sparkT);
+ timers.forEach(clearTimeout);
+ if(wl.parentNode)wl.parentNode.removeChild(wl);   /* removed for good: shows once per page load */
+ unlock();
+ try{window.scrollTo(0,0)}catch(e){}
+ try{var y=document.getElementById("yes");if(y)y.focus({preventScroll:true})}catch(e){}}
+
+function openGift(){
+ if(opened)return;opened=true;
+ try{chime()}catch(e){}
+ wl.classList.add("wl-open");
+ gift.setAttribute("aria-label","Opening your surprise");
+ later(function(){burst(26)},reduce?0:260);
+ later(function(){burst(16)},reduce?0:760);
+ later(function(){wl.classList.add("wl-out")},reduce?500:1800);
+ later(finish,reduce?900:2800)}
+
+gift.addEventListener("click",openGift);
 })();
 </script>
 </body>
