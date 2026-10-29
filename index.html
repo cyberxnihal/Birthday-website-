@@ -177,6 +177,23 @@ filter:drop-shadow(0 2px 6px rgba(255,77,148,.5));animation:wl-fly 1.5s cubic-be
 @media (max-height:620px){.wl-stage{width:154px;height:161px}.wl-scale{transform:scale(.7)}}
 @media (max-height:480px){.wl .wl-title{font-size:1.25rem}.wl-stage{width:121px;height:127px}.wl-scale{transform:scale(.55)}}
 </style>
+
+<!-- ============================================================
+     YOUTUBE MUSIC PLAYER (added) — every id/class is prefixed "yt".
+     The player sits BELOW the card in normal page flow, so it never
+     covers the birthday content.
+     ============================================================ -->
+<style>
+body{flex-direction:column;gap:6px}
+.yt-dock{position:relative;z-index:2;flex:none;width:200px;max-width:100%;height:200px;margin:0 0 10px;border-radius:18px;overflow:hidden;background:#000;
+box-shadow:0 0 0 4px var(--paper),0 0 0 6px var(--red)}
+.yt-dock iframe{display:block;width:200px;height:200px;max-width:100%;border:0}
+.yt-msg{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);transform:translateX(-50%);z-index:60;width:max-content;max-width:min(92vw,420px);
+display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;text-align:left;
+background:var(--paper);color:var(--ink);border:2px solid var(--red);border-radius:18px;padding:10px 14px;font-size:.9rem;line-height:1.4;box-shadow:0 8px 22px rgba(0,0,0,.25)}
+.yt-msg[hidden]{display:none}
+.yt-msg button{font-size:.9rem;padding:8px 18px;flex:none}
+</style>
 </head>
 <body>
 
@@ -301,6 +318,14 @@ May you always stay happy and achieve everything you dream of. 🥳🎁💗 Once
 </section>
 
 </main>
+
+<!-- ===== YOUTUBE PLAYER (added): lives outside the screens, so it is never reloaded or restarted when screens change ===== -->
+<div class="yt-dock" id="ytDock"><div id="ytPlayer" title="Birthday song"></div></div>
+<div class="yt-msg" id="ytMsg" role="status" aria-live="polite" hidden>
+<span id="ytMsgText"></span>
+<button type="button" id="ytPlayBtn">▶ Play Music</button>
+</div>
+
 <script>
 (function(){
 var $=function(s){return document.querySelector(s)},$$=function(s){return document.querySelectorAll(s)};
@@ -333,20 +358,21 @@ function loop(){if(!fwRun)return;ctx.clearRect(0,0,innerWidth,innerHeight);
  requestAnimationFrame(loop)}
 function fireworks(ms){if(reduce)return;pts=[];fwRun=true;fwEnd=Date.now()+ms;loop()}
 
-/* music: Happy Birthday tune made with WebAudio, so no external file is needed */
+/* music: the old WebAudio "Happy Birthday" tune below is no longer started (kept only so nothing else breaks).
+   Music is now played by the YouTube IFrame player (see the YOUTUBE script at the end of the page).
+   music(on) and the 🎵 button just control that player; window.BDMusicUI keeps the button label in sync. */
 var F={G4:392,A4:440,B4:494,C5:523,D5:587,E5:659,F5:698,G5:784};
 var tune="G4 .75,G4 .25,A4 1,G4 1,C5 1,B4 2,G4 .75,G4 .25,A4 1,G4 1,D5 1,C5 2,G4 .75,G4 .25,G5 1,E5 1,C5 1,B4 1,A4 1,F5 .75,F5 .25,E5 1,C5 1,D5 1,C5 2".split(",").map(function(s){var p=s.split(" ");return [F[p[0]],+p[1]]});
 function playTune(){var t=AC.currentTime+.05,b=.42;
  tune.forEach(function(n){var o=AC.createOscillator(),g=AC.createGain(),d=n[1]*b;o.type="triangle";o.frequency.value=n[0];o.connect(g);g.connect(AC.destination);
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16,t+.03);g.gain.exponentialRampToValueAtTime(.001,t+d*.95);o.start(t);o.stop(t+d);t+=d});
  mt=setTimeout(function(){if(musicOn&&AC)playTune()},(t-AC.currentTime+1.5)*1000)}
-function music(on){clearTimeout(mt);if(AC){AC.close();AC=null}musicOn=false;
- if(on){var C=window.AudioContext||window.webkitAudioContext;if(C){try{AC=new C();musicOn=true;playTune()}catch(e){AC=null;musicOn=false}}}
- $("#mb").textContent=musicOn?"⏸ Pause Music":"🎵 Play Music";$("#mb").setAttribute("aria-pressed",musicOn)}
+function music(on){var m=window.BDMusic;if(!m)return;if(on)m.start();else m.pause()}
+window.BDMusicUI=function(p){musicOn=!!p;$("#mb").textContent=musicOn?"⏸ Pause Music":"🎵 Play Music";$("#mb").setAttribute("aria-pressed",musicOn)};
 $("#mb").onclick=function(){music(!musicOn)};
 
 /* intro */
-function go(){burst(["🎉","✨","💗"],12);if(!musicOn)music(true);show("hearts")}
+function go(){burst(["🎉","✨","💗"],12);if(window.BDMusic)window.BDMusic.ensure();show("hearts")}
 function nope(){$("#face").textContent="😤";$("#introT").textContent="HOW DARE YOU!?";$("#introP").textContent="Dobara try karo.";
  var a=$("#app");a.classList.remove("shake");void a.offsetWidth;a.classList.add("shake");$("#no").textContent="Yes";$("#no").onclick=go}
 $("#yes").onclick=go;$("#no").onclick=nope;
@@ -417,6 +443,87 @@ $("#replay").onclick=function(){clearInterval(typing);seen={};envOpen=false;flam
 </script>
 
 <!-- ============================================================
+     YOUTUBE MUSIC SCRIPT (added) — official YouTube IFrame Player API.
+     Video: https://youtu.be/rtOvBOTyX00  (id: rtOvBOTyX00)
+     Self-contained IIFE; exposes window.BDMusic = {start, pause, ensure}.
+     The player is created once and never reloaded, so the song keeps
+     playing (no restart) while the visitor moves between screens.
+     ============================================================ -->
+<script>
+(function(){
+"use strict";
+var VID="rtOvBOTyX00";
+var player=null,ready=false,loading=false,pending=false,started=false,userPaused=false,chk=null;
+var msg=document.getElementById("ytMsg"),msgTxt=document.getElementById("ytMsgText"),msgBtn=document.getElementById("ytPlayBtn");
+
+function ui(p){try{if(window.BDMusicUI)window.BDMusicUI(p)}catch(e){}}
+function showMsg(t,withBtn){msgTxt.textContent=t;msgBtn.hidden=!withBtn;msg.hidden=false}
+function hideMsg(){msg.hidden=true}
+function state(){try{return player&&player.getPlayerState?player.getPlayerState():-1}catch(e){return -1}}
+
+function build(){
+ if(player||!(window.YT&&YT.Player))return;
+ var pv={playsinline:1,controls:0,rel:0,modestbranding:1,iv_load_policy:3,fs:0,disablekb:1,enablejsapi:1};
+ if(/^https?:$/.test(location.protocol))pv.origin=location.origin;
+ player=new YT.Player("ytPlayer",{width:200,height:200,videoId:VID,playerVars:pv,
+  events:{onReady:onReady,onStateChange:onState,onError:onErr,onAutoplayBlocked:onBlocked}})}
+
+function load(){
+ if(player||loading)return;
+ if(window.YT&&YT.Player){build();return}
+ loading=true;
+ window.onYouTubeIframeAPIReady=function(){loading=false;build()};
+ var s=document.createElement("script");
+ s.src="https://www.youtube.com/iframe_api";s.async=true;
+ s.onerror=function(){loading=false};
+ document.head.appendChild(s)}
+
+function attempt(){
+ try{player.unMute();player.setVolume(100);player.playVideo()}catch(e){}
+ arm()}
+
+function arm(){clearTimeout(chk);chk=setTimeout(function(){check(0)},3000)}
+function check(n){
+ if(userPaused)return;
+ if(!ready){showMsg("The YouTube player could not load yet. Please check your internet connection, then tap Play Music.",true);return}
+ var s=state();
+ if(s===1)return;
+ if(s===3&&n<2){chk=setTimeout(function(){check(n+1)},3000);return}
+ showMsg("Your browser or YouTube blocked automatic playback. Tap Play Music to start the song. 🎶",true)}
+
+function onReady(){ready=true;if(pending){pending=false;attempt()}}
+function onState(e){
+ var d=e.data;
+ if(d===1){clearTimeout(chk);hideMsg();ui(true)}
+ else if(d===2||d===-1||d===5){ui(false)}
+ else if(d===0){try{player.seekTo(0);player.playVideo()}catch(x){}}   /* loop the song */
+}
+function onBlocked(){if(!userPaused)showMsg("Your browser blocked automatic playback. Tap Play Music to start the song. 🎶",true);ui(false)}
+function onErr(e){
+ clearTimeout(chk);ui(false);
+ var c=e&&e.data;
+ if(c===101||c===150||c===153)showMsg("YouTube is not allowing this song to play in an embedded player here. If you opened this page as a local file, please host it on a web address (https) and try again.",false);
+ else showMsg("YouTube could not play the song right now. Please try again.",true)}
+
+/* start() must be called straight from a click/tap handler */
+function start(){
+ started=true;userPaused=false;hideMsg();
+ if(ready){attempt()}else{pending=true;load();arm()}}
+function pause(){
+ userPaused=true;pending=false;clearTimeout(chk);hideMsg();
+ if(ready){try{player.pauseVideo()}catch(e){}}
+ ui(false)}
+function ensure(){
+ if(!started||userPaused||!ready)return;
+ var s=state();if(s!==1&&s!==3)attempt()}
+
+window.BDMusic={start:start,pause:pause,ensure:ensure};
+msgBtn.addEventListener("click",start);
+load();   /* preload the API now so playback can begin instantly on the gift tap */
+})();
+</script>
+
+<!-- ============================================================
      WELCOME SCREEN SCRIPT (added) — self-contained IIFE, so none of
      its variables can clash with the original script above.
      ============================================================ -->
@@ -469,7 +576,8 @@ if(reduce){
  for(var k=0;k<12;k++)heart(true);
  heartT=setInterval(heart,550);sparkT=setInterval(sparkle,300)}
 
-/* cute birthday chime (Web Audio, no files) — only runs after the tap */
+/* cute birthday chime (Web Audio, no files) — NO LONGER CALLED: the YouTube song replaces it, so two tunes never overlap.
+   Kept only so the original code stays intact. */
 function chime(){
  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
  var ac;try{ac=new AC()}catch(e){return}
@@ -518,7 +626,7 @@ function finish(){
 
 function openGift(){
  if(opened)return;opened=true;
- try{chime()}catch(e){}
+ try{if(window.BDMusic)window.BDMusic.start()}catch(e){}   /* YouTube song starts directly from this click */
  wl.classList.add("wl-open");
  gift.setAttribute("aria-label","Opening your surprise");
  later(function(){burst(26)},reduce?0:260);
